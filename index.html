@@ -522,8 +522,8 @@
 <!-- ══ SCRIPT ════════════════════════════════════════════════ -->
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────
-const GEMINI_KEY = 'SUA_API_KEY_AQUI'; // substitua pela sua key do Google AI Studio
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+const GEMINI_KEY = 'AQ.Ab8RN6J9f3zr3bMTJHI4JcZ98L65LtoOJgwaeIG4PfhD1g5PsA';
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 // ─── ABAS ─────────────────────────────────────────────────────
 function trocarAba(aba) {
@@ -576,7 +576,7 @@ async function chamarGemini(partes) {
   const body = { contents: [{ parts: partes }] };
   const resp = await fetch(GEMINI_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
     body: JSON.stringify(body)
   });
   if (!resp.ok) {
