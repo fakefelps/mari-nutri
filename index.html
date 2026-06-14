@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análise Clínica · Mari Nutrição</title>
+<style>
+  /* ── TOKENS ─────────────────────────────────────────────── */
+  :root {
+    --verde:    #55675B;
+    --verde-lt: #8a9e93;
+    --rosa:     #D7B5AB;
+    --rose:     #ECDFD9;
+    --cinza:    #EEEEEE;
+    --branco:   #FAFAF8;
+    --texto:    #2c2c2a;
+    --texto-lt: #6b6b68;
+    --borda:    #ddd5cf;
+
+    /* badges exames */
+    --q1:    #b8d4e8;
+    --q2:    #b8e4c4;
+    --q3:    #b8e4c4;
+    --q4:    #f5d98a;
+    --baixo: #f4bfcd;
+    --alto:  #f4a0a0;
+    --t1:    #b8d4e8;
+    --t2:    #b8e4c4;
+    --t3:    #f5d98a;
+
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(85,103,91,.10);
+  }
+
+  /* ── RESET ───────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    font-family: 'Georgia', serif;
+    background: var(--rose);
+    color: var(--texto);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ──────────────────────────────────────────────── */
+  header {
+    background: var(--verde);
+    padding: 28px 40px 24px;
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+  }
+  .header-logo {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: var(--rosa);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .header-text h1 {
+    font-size: 1.5rem;
+    font-weight: normal;
+    color: var(--rose);
+    letter-spacing: .02em;
+  }
+  .header-text p {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .78rem;
+    color: var(--rosa);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* ── TABS ────────────────────────────────────────────────── */
+  .tabs {
+    background: var(--verde);
+    padding: 0 40px;
+    display: flex;
+    gap: 4px;
+    border-bottom: 2px solid rgba(255,255,255,.08);
+  }
+  .tab-btn {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .82rem;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--rosa);
+    background: none;
+    border: none;
+    padding: 14px 22px 12px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: color .2s, border-color .2s;
+  }
+  .tab-btn:hover { color: var(--branco); }
+  .tab-btn.active {
+    color: var(--branco);
+    border-bottom-color: var(--rosa);
+  }
+
+  /* ── MAIN ────────────────────────────────────────────────── */
+  main { padding: 40px; max-width: 900px; margin: 0 auto; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── UPLOAD CARD ─────────────────────────────────────────── */
+  .upload-card {
+    background: var(--branco);
+    border: 2px dashed var(--borda);
+    border-radius: var(--radius);
+    padding: 48px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+  }
+  .upload-card:hover, .upload-card.drag { border-color: var(--verde); background: #f5f0ed; }
+  .upload-card input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .upload-icon { font-size: 2.2rem; margin-bottom: 12px; }
+  .upload-card h2 {
+    font-size: 1.1rem; font-weight: normal; color: var(--verde); margin-bottom: 6px;
+  }
+  .upload-card p {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .82rem; color: var(--texto-lt);
+  }
+  .upload-card .file-name {
+    margin-top: 14px;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .85rem;
+    color: var(--verde);
+    font-weight: 600;
+  }
+
+  /* ── BTN ANALISAR ────────────────────────────────────────── */
+  .btn-analisar {
+    display: block;
+    width: 100%;
+    margin-top: 20px;
+    padding: 16px;
+    background: var(--verde);
+    color: var(--branco);
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .9rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  .btn-analisar:hover { opacity: .88; }
+  .btn-analisar:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* ── LOADER ──────────────────────────────────────────────── */
+  .loader {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 48px;
+  }
+  .loader.show { display: flex; }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--borda);
+    border-top-color: var(--verde);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader p {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .85rem; color: var(--texto-lt);
+  }
+
+  /* ── RESULTADO FORMULÁRIO ────────────────────────────────── */
+  .resultado { margin-top: 32px; }
+
+  .secao-titulo {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .7rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--verde-lt);
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--borda);
+  }
+
+  .ficha-paciente {
+    background: var(--branco);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+  }
+  .ficha-paciente h3 {
+    font-size: 1.25rem;
+    font-weight: normal;
+    color: var(--verde);
+    margin-bottom: 4px;
+  }
+  .ficha-paciente .subtitulo {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .8rem;
+    color: var(--texto-lt);
+    margin-bottom: 20px;
+  }
+  .grid-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .info-item label {
+    display: block;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .7rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--texto-lt);
+    margin-bottom: 3px;
+  }
+  .info-item span {
+    font-size: .95rem;
+    color: var(--texto);
+  }
+
+  /* blocos de análise */
+  .blocos { display: grid; gap: 16px; }
+  .bloco {
+    background: var(--branco);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    box-shadow: var(--shadow);
+  }
+  .bloco h4 {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--verde);
+    margin-bottom: 10px;
+  }
+  .bloco ul {
+    list-style: none;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .bloco ul li {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .88rem;
+    color: var(--texto);
+    padding-left: 14px;
+    position: relative;
+  }
+  .bloco ul li::before {
+    content: '·';
+    position: absolute; left: 0;
+    color: var(--rosa);
+    font-size: 1.2rem;
+    line-height: 1;
+    top: 1px;
+  }
+  .bloco p {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .88rem;
+    color: var(--texto);
+    line-height: 1.6;
+  }
+
+  /* alertas */
+  .alertas { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+  .alerta {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .86rem;
+  }
+  .alerta.vermelho { background: #fde8e8; color: #8b1a1a; }
+  .alerta.amarelo  { background: #fef8e1; color: #7a5f00; }
+  .alerta.verde    { background: #e6f4ec; color: #1a5c33; }
+  .alerta-icon { flex-shrink: 0; font-size: 1rem; }
+
+  /* ── TABELA EXAMES ───────────────────────────────────────── */
+  .exames-header {
+    background: var(--branco);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+    display: flex; gap: 24px; flex-wrap: wrap;
+  }
+  .exames-header .info-item { min-width: 120px; }
+
+  .secao-exames { margin-bottom: 28px; }
+  .secao-exames h4 {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .7rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--verde-lt);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--borda);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--branco);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .84rem;
+  }
+  thead th {
+    background: var(--verde);
+    color: var(--branco);
+    padding: 11px 14px;
+    text-align: left;
+    font-weight: normal;
+    font-size: .72rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  tbody tr { border-bottom: 1px solid var(--cinza); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td {
+    padding: 11px 14px;
+    vertical-align: middle;
+    color: var(--texto);
+  }
+  .exame-nome { font-weight: 600; }
+  .ref { color: var(--texto-lt); font-size: .78rem; }
+  .resultado-val { font-weight: 700; font-size: .95rem; }
+
+  /* badges */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: .74rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .badge-Q1    { background: var(--q1);    color: #1a4a6e; }
+  .badge-Q2    { background: var(--q2);    color: #1a5c33; }
+  .badge-Q3    { background: var(--q3);    color: #1a5c33; }
+  .badge-Q4    { background: var(--q4);    color: #7a5f00; }
+  .badge-BAIXO { background: var(--baixo); color: #8b2a3a; }
+  .badge-ALTO  { background: var(--alto);  color: #7a1a1a; }
+  .badge-T1    { background: var(--t1);    color: #1a4a6e; }
+  .badge-T2    { background: var(--t2);    color: #1a5c33; }
+  .badge-T3    { background: var(--t3);    color: #7a5f00; }
+
+  /* barra de quartil visual */
+  .barra-wrap {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .barra-bg {
+    flex: 1; height: 6px;
+    background: var(--cinza);
+    border-radius: 4px;
+    position: relative;
+    min-width: 60px;
+  }
+  .barra-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--verde);
+    transition: width .4s;
+  }
+  .barra-fill.fora-baixo { background: #e88fa0; }
+  .barra-fill.fora-alto  { background: #e85555; }
+
+  /* resumo final */
+  .resumo-exames {
+    background: var(--branco);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+    margin-top: 8px;
+  }
+  .resumo-exames h4 {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--verde);
+    margin-bottom: 12px;
+  }
+
+  /* ── ERRO ────────────────────────────────────────────────── */
+  .erro {
+    background: #fde8e8;
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-top: 24px;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .88rem;
+    color: #8b1a1a;
+    display: none;
+  }
+  .erro.show { display: block; }
+
+  /* ── LEGENDA BADGES ──────────────────────────────────────── */
+  .legenda {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-bottom: 20px;
+  }
+  .leg-item {
+    display: flex; align-items: center; gap: 5px;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .74rem; color: var(--texto-lt);
+  }
+
+  /* ── RODAPÉ ──────────────────────────────────────────────── */
+  footer {
+    text-align: center;
+    padding: 32px;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: .74rem;
+    color: var(--texto-lt);
+  }
+
+  /* ── RESP ────────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    header { padding: 20px; }
+    .tabs { padding: 0 16px; }
+    main { padding: 20px 16px; }
+    .grid-info { grid-template-columns: 1fr 1fr; }
+    thead th:nth-child(3), tbody td:nth-child(3) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ════════════════════════════════════════════════ -->
+<header>
+  <div class="header-logo">🌿</div>
+  <div class="header-text">
+    <h1>Consultório da Mari</h1>
+    <p>Análise Clínica · Nutrição</p>
+  </div>
+</header>
+
+<!-- ══ TABS ══════════════════════════════════════════════════ -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="trocarAba('formulario')">Formulário Pré-consulta</button>
+  <button class="tab-btn" onclick="trocarAba('exames')">Exames Laboratoriais</button>
+</div>
+
+<!-- ══ MAIN ══════════════════════════════════════════════════ -->
+<main>
+
+  <!-- ── ABA FORMULÁRIO ───────────────────────────────────── -->
+  <div id="tab-formulario" class="tab-panel active">
+    <div class="upload-card" id="drop-form"
+         ondragover="dragOver(event,'drop-form')"
+         ondragleave="dragLeave('drop-form')"
+         ondrop="dropFile(event,'drop-form','input-form')">
+      <input type="file" id="input-form" accept=".pdf,image/*"
+             onchange="arquivoSelecionado(this,'nome-form')">
+      <div class="upload-icon">📋</div>
+      <h2>Envie o formulário de pré-consulta</h2>
+      <p>PDF ou imagem · clique ou arraste aqui</p>
+      <div class="file-name" id="nome-form"></div>
+    </div>
+    <button class="btn-analisar" id="btn-form" onclick="analisarFormulario()" disabled>
+      Analisar Formulário
+    </button>
+
+    <div class="loader" id="loader-form">
+      <div class="spinner"></div>
+      <p>Lendo formulário e gerando análise…</p>
+    </div>
+
+    <div class="erro" id="erro-form"></div>
+    <div class="resultado" id="resultado-form"></div>
+  </div>
+
+  <!-- ── ABA EXAMES ────────────────────────────────────────── -->
+  <div id="tab-exames" class="tab-panel">
+    <div class="upload-card" id="drop-exm"
+         ondragover="dragOver(event,'drop-exm')"
+         ondragleave="dragLeave('drop-exm')"
+         ondrop="dropFile(event,'drop-exm','input-exm')">
+      <input type="file" id="input-exm" accept=".pdf,image/*"
+             onchange="arquivoSelecionado(this,'nome-exm')">
+      <div class="upload-icon">🔬</div>
+      <h2>Envie o laudo laboratorial</h2>
+      <p>PDF ou imagem · clique ou arraste aqui</p>
+      <div class="file-name" id="nome-exm"></div>
+    </div>
+    <button class="btn-analisar" id="btn-exm" onclick="analisarExames()" disabled>
+      Analisar Exames
+    </button>
+
+    <div class="loader" id="loader-exm">
+      <div class="spinner"></div>
+      <p>Lendo laudo e classificando exames…</p>
+    </div>
+
+    <div class="erro" id="erro-exm"></div>
+    <div class="resultado" id="resultado-exm"></div>
+  </div>
+
+</main>
+
+<footer>Uso clínico exclusivo · Mari Nutrição</footer>
+
+<!-- ══ SCRIPT ════════════════════════════════════════════════ -->
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────
+const GEMINI_KEY = 'SUA_API_KEY_AQUI'; // substitua pela sua key do Google AI Studio
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+
+// ─── ABAS ─────────────────────────────────────────────────────
+function trocarAba(aba) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + aba).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ─── UPLOAD ───────────────────────────────────────────────────
+function arquivoSelecionado(input, nomeId) {
+  const f = input.files[0];
+  if (!f) return;
+  document.getElementById(nomeId).textContent = '📎 ' + f.name;
+  const btn = input.id === 'input-form' ? 'btn-form' : 'btn-exm';
+  document.getElementById(btn).disabled = false;
+}
+function dragOver(e, id) { e.preventDefault(); document.getElementById(id).classList.add('drag'); }
+function dragLeave(id) { document.getElementById(id).classList.remove('drag'); }
+function dropFile(e, dropId, inputId) {
+  e.preventDefault();
+  dragLeave(dropId);
+  const f = e.dataTransfer.files[0];
+  if (!f) return;
+  const input = document.getElementById(inputId);
+  const dt = new DataTransfer();
+  dt.items.add(f);
+  input.files = dt.files;
+  arquivoSelecionado(input, inputId === 'input-form' ? 'nome-form' : 'nome-exm');
+}
+
+// ─── UTILS ────────────────────────────────────────────────────
+async function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+function mostrarErro(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = '⚠️ ' + msg;
+  el.classList.add('show');
+}
+function limparErro(id) { document.getElementById(id).classList.remove('show'); }
+
+async function chamarGemini(partes) {
+  const body = { contents: [{ parts: partes }] };
+  const resp = await fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `Erro ${resp.status}`);
+  }
+  const data = await resp.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+// ─── ANÁLISE FORMULÁRIO ───────────────────────────────────────
+async function analisarFormulario() {
+  const file = document.getElementById('input-form').files[0];
+  if (!file) return;
+
+  limparErro('erro-form');
+  document.getElementById('resultado-form').innerHTML = '';
+  document.getElementById('loader-form').classList.add('show');
+  document.getElementById('btn-form').disabled = true;
+
+  try {
+    const b64 = await fileToBase64(file);
+    const mime = file.type || 'application/pdf';
+
+    const prompt = `Você é uma assistente clínica de uma nutricionista. Analise este formulário de pré-consulta preenchido pelo paciente e retorne APENAS um JSON válido, sem texto extra, sem markdown, sem blocos de código, com a estrutura abaixo.
+
+Retorne EXATAMENTE este JSON:
+{
+  "paciente": {
+    "nome": "...",
+    "idade": "...",
+    "peso": "...",
+    "altura": "...",
+    "imc_estimado": "...",
+    "profissao": "...",
+    "cidade": "..."
+  },
+  "objetivos": ["objetivo 1", "objetivo 2"],
+  "historico_saude": {
+    "doencas": ["doença 1"],
+    "medicamentos": ["medicamento 1"],
+    "alergias": ["alergia 1"],
+    "historico_familiar": ["item 1"]
+  },
+  "estilo_vida": {
+    "atividade_fisica": "descrição",
+    "sono": "descrição",
+    "nivel_estresse": "baixo/médio/alto",
+    "consumo_alcool": "descrição"
+  },
+  "habitos_alimentares": {
+    "refeicoes_dia": "número estimado",
+    "comportamentos": ["comportamento 1"],
+    "preferencias": "descrição",
+    "restricoes": ["restrição 1"],
+    "hidratacao": "descrição"
+  },
+  "intestino": {
+    "funcionamento": "descrição",
+    "bristol": "tipo X"
+  },
+  "pontos_atencao": [
+    { "nivel": "vermelho|amarelo|verde", "texto": "descrição do ponto" }
+  ],
+  "resumo_clinico": "Parágrafo curto com visão clínica geral do paciente para a nutricionista."
+}
+
+Se algum campo não estiver no formulário, use "Não informado". Os pontos de atenção devem ser clínicamente relevantes para nutrição. Nível vermelho = urgente/importante, amarelo = atentar, verde = positivo.`;
+
+    const texto = await chamarGemini([
+      { text: prompt },
+      { inline_data: { mime_type: mime, data: b64 } }
+    ]);
+
+    const json = JSON.parse(texto.trim().replace(/^```json|```$/g, '').trim());
+    renderFormulario(json);
+
+  } catch (e) {
+    mostrarErro('erro-form', e.message || 'Não foi possível analisar o formulário.');
+  } finally {
+    document.getElementById('loader-form').classList.remove('show');
+    document.getElementById('btn-form').disabled = false;
+  }
+}
+
+function renderFormulario(d) {
+  const p = d.paciente || {};
+  const PA = (d.pontos_atencao || []);
+  const iconePa = { vermelho: '🔴', amarelo: '🟡', verde: '🟢' };
+
+  const html = `
+    <div class="ficha-paciente">
+      <h3>${p.nome || 'Paciente'}</h3>
+      <div class="subtitulo">Formulário analisado em ${new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'})}</div>
+      <div class="grid-info">
+        ${fi('Idade', p.idade)}
+        ${fi('Peso', p.peso)}
+        ${fi('Altura', p.altura)}
+        ${fi('IMC estimado', p.imc_estimado)}
+        ${fi('Profissão', p.profissao)}
+        ${fi('Cidade', p.cidade)}
+      </div>
+    </div>
+
+    ${PA.length ? `
+    <p class="secao-titulo">Pontos de Atenção</p>
+    <div class="bloco" style="margin-bottom:16px">
+      <div class="alertas">
+        ${PA.map(a => `
+          <div class="alerta ${a.nivel}">
+            <span class="alerta-icon">${iconePa[a.nivel] || '•'}</span>
+            <span>${a.texto}</span>
+          </div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    <p class="secao-titulo">Resumo Clínico</p>
+    <div class="bloco" style="margin-bottom:24px">
+      <p>${d.resumo_clinico || ''}</p>
+    </div>
+
+    <p class="secao-titulo">Análise Detalhada</p>
+    <div class="blocos">
+      ${bloco('Objetivos', d.objetivos)}
+      ${blocoObj('Histórico de Saúde', {
+        'Doenças/condições': d.historico_saude?.doencas,
+        'Medicamentos': d.historico_saude?.medicamentos,
+        'Alergias/intolerâncias': d.historico_saude?.alergias,
+        'Histórico familiar': d.historico_saude?.historico_familiar
+      })}
+      ${blocoTextos('Estilo de Vida', {
+        'Atividade física': d.estilo_vida?.atividade_fisica,
+        'Sono': d.estilo_vida?.sono,
+        'Estresse': d.estilo_vida?.nivel_estresse,
+        'Álcool': d.estilo_vida?.consumo_alcool
+      })}
+      ${blocoTextos('Hábitos Alimentares', {
+        'Refeições por dia': d.habitos_alimentares?.refeicoes_dia,
+        'Preferências': d.habitos_alimentares?.preferencias,
+        'Hidratação': d.habitos_alimentares?.hidratacao
+      })}
+      ${bloco('Comportamentos Alimentares', d.habitos_alimentares?.comportamentos)}
+      ${bloco('Restrições Alimentares', d.habitos_alimentares?.restricoes)}
+      ${blocoTextos('Intestino', {
+        'Funcionamento': d.intestino?.funcionamento,
+        'Escala de Bristol': d.intestino?.bristol
+      })}
+    </div>
+  `;
+  document.getElementById('resultado-form').innerHTML = html;
+}
+
+function fi(label, val) {
+  return `<div class="info-item"><label>${label}</label><span>${val || '—'}</span></div>`;
+}
+function bloco(titulo, lista) {
+  if (!lista || !lista.length) return '';
+  const itens = Array.isArray(lista) ? lista : [lista];
+  return `<div class="bloco"><h4>${titulo}</h4><ul>${itens.filter(i=>i&&i!=='Não informado').map(i=>`<li>${i}</li>`).join('')}</ul></div>`;
+}
+function blocoObj(titulo, obj) {
+  const itens = Object.entries(obj).flatMap(([k, v]) => {
+    if (!v || (Array.isArray(v) && !v.length)) return [];
+    const vals = Array.isArray(v) ? v.filter(x=>x&&x!=='Não informado') : [v];
+    if (!vals.length) return [];
+    return vals.map(x => `<b>${k}:</b> ${x}`);
+  });
+  if (!itens.length) return '';
+  return `<div class="bloco"><h4>${titulo}</h4><ul>${itens.map(i=>`<li>${i}</li>`).join('')}</ul></div>`;
+}
+function blocoTextos(titulo, obj) {
+  const itens = Object.entries(obj)
+    .filter(([,v]) => v && v !== 'Não informado')
+    .map(([k,v]) => `<b>${k}:</b> ${v}`);
+  if (!itens.length) return '';
+  return `<div class="bloco"><h4>${titulo}</h4><ul>${itens.map(i=>`<li>${i}</li>`).join('')}</ul></div>`;
+}
+
+// ─── ANÁLISE EXAMES ───────────────────────────────────────────
+async function analisarExames() {
+  const file = document.getElementById('input-exm').files[0];
+  if (!file) return;
+
+  limparErro('erro-exm');
+  document.getElementById('resultado-exm').innerHTML = '';
+  document.getElementById('loader-exm').classList.add('show');
+  document.getElementById('btn-exm').disabled = true;
+
+  try {
+    const b64 = await fileToBase64(file);
+    const mime = file.type || 'application/pdf';
+
+    const prompt = `Você é uma assistente clínica de uma nutricionista. Analise este laudo laboratorial e retorne APENAS um JSON válido, sem texto extra, sem markdown, sem blocos de código.
+
+REGRAS DE CLASSIFICAÇÃO:
+- Para TSH, T4 Livre e T3 Total: use TERCIS (T1 = 0-33%, T2 = 33-67%, T3 = 67-100% do intervalo)
+- Para todos os demais exames: use QUARTIS (Q1 = 0-25%, Q2 = 25-50%, Q3 = 50-75%, Q4 = 75-100%)
+- Se o valor está ABAIXO do mínimo de referência: classificacao = "BAIXO"
+- Se o valor está ACIMA do máximo de referência: classificacao = "ALTO"
+- Para calcular: Amplitude = Max - Min. Q1 = Min + 0.25*Amp, Q2 = Min + 0.50*Amp, Q3 = Min + 0.75*Amp
+
+Retorne EXATAMENTE este JSON:
+{
+  "paciente": {
+    "nome": "...",
+    "idade": "...",
+    "sexo": "...",
+    "data_coleta": "..."
+  },
+  "secoes": [
+    {
+      "nome": "Hemograma",
+      "exames": [
+        {
+          "nome": "Hemoglobina",
+          "resultado": 13.4,
+          "unidade": "g/dL",
+          "ref_min": 12.0,
+          "ref_max": 16.0,
+          "classificacao": "Q2",
+          "percentual": 35,
+          "metodo": "quartil"
+        }
+      ]
+    }
+  ],
+  "exames_fora_referencia": ["lista de nomes de exames fora da referência"],
+  "pontos_atencao": [
+    { "nivel": "vermelho|amarelo|verde", "texto": "observação clínica relevante para nutrição" }
+  ],
+  "resumo": "Parágrafo com visão geral dos exames para a nutricionista."
+}
+
+O campo "percentual" deve ser o percentual de posição do resultado dentro do intervalo de referência (0% = no mínimo, 100% = no máximo). Se estiver fora, use 0 (abaixo) ou 100 (acima).
+O campo "metodo" deve ser "quartil" ou "tercil".
+Agrupe os exames nas seções corretas: Eritrograma, Leucograma, Plaquetas, Bioquímica, Lipidograma, Hormônios Tireoidianos, Vitaminas e Minerais, Urinálise, etc.`;
+
+    const texto = await chamarGemini([
+      { text: prompt },
+      { inline_data: { mime_type: mime, data: b64 } }
+    ]);
+
+    const json = JSON.parse(texto.trim().replace(/^```json|```$/g, '').trim());
+    renderExames(json);
+
+  } catch (e) {
+    mostrarErro('erro-exm', e.message || 'Não foi possível analisar os exames.');
+  } finally {
+    document.getElementById('loader-exm').classList.remove('show');
+    document.getElementById('btn-exm').disabled = false;
+  }
+}
+
+function renderExames(d) {
+  const p = d.paciente || {};
+  const PA = d.pontos_atencao || [];
+  const iconePa = { vermelho: '🔴', amarelo: '🟡', verde: '🟢' };
+
+  const labelbadge = {
+    Q1:'Q1 · Quartil inferior', Q2:'Q2', Q3:'Q3', Q4:'Q4 · Quartil superior',
+    T1:'T1 · Tercil inferior', T2:'T2 · Terço médio', T3:'T3 · Tercil superior',
+    BAIXO:'↓ Abaixo', ALTO:'↑ Acima'
+  };
+
+  const secoesHtml = (d.secoes || []).map(sec => {
+    if (!sec.exames || !sec.exames.length) return '';
+    const rows = sec.exames.map(ex => {
+      const cls = ex.classificacao || 'Q2';
+      const pct = Math.min(100, Math.max(0, ex.percentual || 0));
+      const barraClass = cls === 'BAIXO' ? 'fora-baixo' : cls === 'ALTO' ? 'fora-alto' : '';
+      const refStr = (ex.ref_min != null && ex.ref_max != null)
+        ? `${ex.ref_min} – ${ex.ref_max} ${ex.unidade || ''}`
+        : ex.ref_min != null ? `> ${ex.ref_min} ${ex.unidade || ''}`
+        : ex.ref_max != null ? `< ${ex.ref_max} ${ex.unidade || ''}` : '—';
+
+      return `<tr>
+        <td class="exame-nome">${ex.nome}</td>
+        <td class="ref">${refStr}</td>
+        <td><span class="resultado-val">${ex.resultado ?? '—'}</span> <span style="color:var(--texto-lt);font-size:.78rem">${ex.unidade||''}</span></td>
+        <td>
+          <div class="barra-wrap">
+            <div class="barra-bg"><div class="barra-fill ${barraClass}" style="width:${pct}%"></div></div>
+          </div>
+        </td>
+        <td><span class="badge badge-${cls}">${labelbadge[cls] || cls}</span></td>
+      </tr>`;
+    }).join('');
+
+    return `<div class="secao-exames">
+      <h4>${sec.nome}</h4>
+      <table>
+        <thead><tr>
+          <th>Exame</th><th>Referência</th><th>Resultado</th><th style="min-width:80px">Posição</th><th>Classificação</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }).join('');
+
+  const html = `
+    <div class="exames-header">
+      ${fi('Paciente', p.nome)}
+      ${fi('Idade', p.idade)}
+      ${fi('Sexo', p.sexo)}
+      ${fi('Data da coleta', p.data_coleta)}
+    </div>
+
+    <div class="legenda">
+      <span class="leg-item"><span class="badge badge-BAIXO">↓</span> Abaixo da referência</span>
+      <span class="leg-item"><span class="badge badge-Q1">Q1</span> Quartil inferior</span>
+      <span class="leg-item"><span class="badge badge-Q2">Q2</span> Q2</span>
+      <span class="leg-item"><span class="badge badge-Q3">Q3</span> Q3</span>
+      <span class="leg-item"><span class="badge badge-Q4">Q4</span> Quartil superior</span>
+      <span class="leg-item"><span class="badge badge-ALTO">↑</span> Acima da referência</span>
+      <span class="leg-item"><span class="badge badge-T1">T1</span> T2 T3 = Tercis (tireoide)</span>
+    </div>
+
+    ${PA.length ? `
+    <p class="secao-titulo">Pontos de Atenção</p>
+    <div class="bloco" style="margin-bottom:24px">
+      <div class="alertas">
+        ${PA.map(a=>`<div class="alerta ${a.nivel}"><span class="alerta-icon">${iconePa[a.nivel]||'•'}</span><span>${a.texto}</span></div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    ${secoesHtml}
+
+    ${d.resumo ? `
+    <div class="resumo-exames">
+      <h4>Resumo Clínico</h4>
+      <p style="font-family:'Helvetica Neue',sans-serif;font-size:.88rem;line-height:1.6;color:var(--texto)">${d.resumo}</p>
+    </div>` : ''}
+  `;
+
+  document.getElementById('resultado-exm').innerHTML = html;
+}
+</script>
+</body>
+</html>
